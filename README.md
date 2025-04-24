@@ -1,10 +1,8 @@
 # vision_llm_project
 
-# 🧠 LLM + Computer Vision Image Analysis Project
-
 This is a simple web application built with Flask. It allows users to upload an image, processes the image using basic computer vision, and sends the result to OpenAI GPT for semantic analysis.
 
----
+
 
 ## 🛠️ Features
 
@@ -13,7 +11,7 @@ This is a simple web application built with Flask. It allows users to upload an 
 - 🤖 Use OpenAI GPT API for text-based analysis  
 - 🌐 Handle API requests and responses  
 
----
+
 
 ## 📦 Installation
 
@@ -30,7 +28,7 @@ If needed (e.g. permission error):
 sudo pip3 install -r requirements.txt
 ```
 
----
+
 
 ## 📁 Project Structure
 
@@ -46,7 +44,7 @@ project-root/
 └── README.md            # This file
 ```
 
----
+
 
 ## 🚀 Running the App
 
@@ -59,7 +57,7 @@ python3 app.py
 Open your browser and visit:  
 [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
 
----
+
 
 ## 🔐 .env File
 
@@ -69,7 +67,7 @@ Create a `.env` file in the project root to store your API key:
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
----
+
 
 ## 💡 Future Ideas
 
