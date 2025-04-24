@@ -1,5 +1,5 @@
 # vision_llm_project
-```markdown
+
 # 🧠 LLM + Computer Vision Image Analysis Project
 
 This is a simple web application built with Flask. It allows users to upload an image, processes the image using basic computer vision, and sends the result to OpenAI GPT for semantic analysis.
