@@ -1,16 +1,31 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, redirect, url_for
+from PIL import Image
+import os
+from detect_items import process_and_detect
 
+UPLOAD_FOLDER = 'static/uploaded'
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
-
-@app.route('/upload', methods=['POST'])
-def upload_image():
-    image = request.files['image']  # 取得上傳的圖片
-    # 在這裡處理圖片（如物件偵測）
-    return jsonify({"message": "圖片上傳成功！"})
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    result = None
+    if request.method == 'POST':
+        if 'image' not in request.files:
+            return redirect(request.url)
+        file = request.files['image']
+        if file.filename == '':
+            return redirect(request.url)
+        if file:
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            detected_items, missing_items = process_and_detect(filepath)
+            result = {
+                'detected': detected_items,
+                'missing': missing_items,
+                'filename': file.filename
+            }
+    return render_template('index.html', result=result)
 
 if __name__ == '__main__':
     app.run(debug=True)

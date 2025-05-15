@@ -1,6 +1,6 @@
-flask
-openai
-requests
+Flask==2.2.5
+Pillow
 opencv-python
-pillow
+transformers
+torch
 python-dotenv
