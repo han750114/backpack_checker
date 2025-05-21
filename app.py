@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from PIL import Image
 import os
-from detect_items import process_and_detect
+from detect_item import process_and_detect
 
 UPLOAD_FOLDER = 'static/uploaded'
 app = Flask(__name__)

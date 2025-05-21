@@ -25,12 +25,13 @@ def preprocess_image(image_path):
 
 def process_and_detect(image_path):
     image = preprocess_image(image_path)
-    inputs = processor(images=image, return_tensors="pt")
+    inputs = processor(images=image, text="List the items in the backpack", return_tensors="pt")
+
     with torch.no_grad():
         out = model.generate(**inputs)
     caption = processor.decode(out[0], skip_special_tokens=True)
 
-    # Extract keywords from caption (very basic keyword split)
+    # Extract keywords from caption (basic keyword split)
     detected_items = [word.strip().lower() for word in caption.replace('a ', '').replace('and', ',').split(',') if word.strip()]
     missing_items = list(checklist - set(detected_items))
     return detected_items, missing_items
