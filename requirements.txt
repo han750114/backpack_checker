@@ -1,6 +1,7 @@
-Flask==2.2.5
-Pillow
-opencv-python
-transformers
+flask
+openai
 torch
+opencv-python
+Pillow
+numpy
 python-dotenv

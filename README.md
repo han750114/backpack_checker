@@ -1,104 +1,50 @@
-# 🎒 Backpack Item Checker (Flask + VLM)
+# Backpack Item Checker
 
-This is a simple web application that helps users check if they've packed all necessary items in their backpack.  
-It uses basic image processing and a vision-language model (BLIP) to analyze the contents of a photo and compare it with a preset checklist.
+This is a simple web app that uses OpenAI's GPT-4o with vision to recognize items inside a backpack based on an uploaded image. It compares the detected items with a predefined checklist and highlights which items are detected and which are missing.
 
----
-
-## 🛠 Features
-
-✅ Upload an image of your backpack contents via web interface  
-🎨 Image processing with OpenCV (contrast/blur correction)  
-🤖 Object captioning using BLIP (Vision-Language Model from Hugging Face)  
-📋 Compares detected items with a custom checklist  
-⚠️ Notifies you of missing items  
-
----
+## ✅ Features
+- Upload a backpack image via browser
+- Automatically resize and encode the image
+- Use OpenAI GPT-4o to analyze image contents
+- Compare detected items against a checklist
+- Display results with missing items highlighted
 
 ## 📁 Project Structure
-
 ```
-
-backpack-checker-vlm/
-├── app.py                 # Main Flask app
-├── detect\_items.py        # Image processing and BLIP detection
-├── checklist.json         # Your item checklist
-├── requirements.txt       # Python packages
+backpack_checker/
+├── app.py                  # Flask server
+├── detect_item.py         # Main image + GPT-4o processing logic
+├── checklist.json         # Predefined list of required items
 ├── templates/
-│   └── index.html         # Web UI
+│   └── index.html         # Upload and result page
 ├── static/
 │   └── uploaded/          # Uploaded image folder
+├── .env                   # (optional) Contains OpenAI API key
+├── requirements.txt       # Python package list
 └── README.md              # This file
-
-````
-
----
-
-## 💻 Installation
-
-**Install required Python packages**:
-
-```bash
-pip install -r requirements.txt
-````
-
-(Optional) Create a virtual environment:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # or venv\\Scripts\\activate (Windows)
 ```
 
----
+## 📦 Installation
+```bash
+pip install -r requirements.txt
+```
 
-## 🚀 Running the App
+If you're using a `.env` file:
+```
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxx
+```
 
+## 🚀 Run the App
 ```bash
 python app.py
 ```
-
-Then open your browser and go to:
-
-```
-http://127.0.0.1:5000/
-```
-
----
+Visit: `http://127.0.0.1:5000/`
 
 ## 🧠 How It Works
-
-1. Upload an image of your backpack contents.
-2. The system performs basic image cleanup (blur reduction, contrast enhancement).
-3. BLIP generates a caption describing visible items.
-4. The detected keywords are compared with your checklist (`checklist.json`).
-5. You’ll get a result showing what you’ve packed ✅ and what you’re missing ❌.
+- The image is resized to 384x384 and base64 encoded
+- It is passed to OpenAI GPT-4o with a clear visual prompt
+- The response is parsed line-by-line and compared to a checklist
+- Any unmatched items are considered "missing"
 
 ---
-
-## 📋 Customize Your Checklist
-
-You can modify `checklist.json` like this:
-
-```json
-["wallet", "keys", "phone", "student ID", "pen"]
-```
-
----
-
-## 💡 Future Ideas
-
-* Add VQA (Visual Question Answering)
-* Support multiple language output
-* Add image segmentation to isolate each object
-* Mobile responsive UI or mobile app version
-
----
-
-## 📚 Credits
-
-* [Salesforce BLIP](https://github.com/salesforce/BLIP)
-* [Transformers Library](https://huggingface.co/transformers/)
-* [Flask](https://flask.palletsprojects.com/)
-
----
-
+MIT License © 2025

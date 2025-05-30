@@ -1,9 +1,11 @@
 [
-    "wallet",
-    "phone",
-    "keys",
-    "student ID",
-    "pen",
-    "notebook",
-    "tissue"
-  ]
+  "notebook",
+  "pen",
+  "eraser",
+  "ruler",
+  "water bottle",
+  "wallet",
+  "phone",
+  "tissue",
+  "lunchbox"
+]
