@@ -1,31 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for
-from PIL import Image
+from flask import Flask, render_template, request
 import os
-from detect_item import process_and_detect
+from werkzeug.utils import secure_filename
+from detect_item import process_and_detect_b
 
-UPLOAD_FOLDER = 'static/uploaded'
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = 'static/uploaded'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    result = None
+    found, missing, crop_results, filename = [], [], [], None
+
     if request.method == 'POST':
-        if 'image' not in request.files:
-            return redirect(request.url)
         file = request.files['image']
-        if file.filename == '':
-            return redirect(request.url)
         if file:
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            detected_items, missing_items = process_and_detect(filepath)
-            result = {
-                'detected': detected_items,
-                'missing': missing_items,
-                'filename': file.filename
-            }
-    return render_template('index.html', result=result)
+
+            found, missing, crop_results, filename = process_and_detect_b(filepath)
+
+    return render_template('index.html', found=found, missing=missing, crop_results=crop_results, filename=filename)
 
 if __name__ == '__main__':
     app.run(debug=True)

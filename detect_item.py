@@ -1,111 +1,76 @@
-import cv2
-import numpy as np
-import json
-from PIL import Image
-import torch
-import openai
 import os
+import cv2
+import openai
+import numpy as np
+from PIL import Image
 import base64
 
-# 讀入 checklist
-with open("checklist.json", "r") as f:
-    checklist = set(item.lower() for item in json.load(f))
-
-# 讀取 OpenAI API 金鑰
+# ✅ 設定 OpenAI API 金鑰（請確保已在環境變數中設定 OPENAI_API_KEY）
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# 改回彩圖處理
+# ✅ 模擬一份預期物品清單（可換成從檔案讀取）
+EXPECTED_ITEMS = [
+    "book", "notebook", "sunglasses", "water bottle", "pencil case",
+    "umbrella", "wallet", "keychain", "snack", "towel", "card"
+]
 
-def preprocess_image(image_path):
-    img = cv2.imread(image_path)
-    img = cv2.resize(img, (512, 512))
-    return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+# ✅ CLAHE 增強對比 + 邊緣偵測 + 輪廓裁切
+def extract_objects(image_path):
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# 對應詞典
-translation_dict = {
-    "pencil case": "pen",
-    "sunglasses": "glasses",
-    "compact pouch": "bag",
-    "red zipper pouch": "bag",
-    "blue striped pouch": "bag",
-    "thermos bottle": "water bottle",
-    "water bottle": "water bottle",
-    "towel": "tissue",
-    "card": "id card",
-    "keys": "key",
-    "keychain": "key",
-    "hair ties": "accessory",
-    "scrunchies": "accessory",
-    "clothing": "clothes",
-    "notebook": "notebook",
-    "book": "notebook",
-    "umbrella": "umbrella",
-    "coin purse": "wallet",
-    "wallet": "wallet",
-    "lunchbox": "lunchbox",
-    "packed lunch": "lunchbox",
-    "phone": "phone",
-    "mobile phone": "phone",
-    "cellphone": "phone",
-    "ruler": "ruler",
-    "eraser": "eraser",
-    "pen": "pen",
-    "ballpoint pen": "pen"
-}
+    # CLAHE 對比增強
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    enhanced = clahe.apply(gray)
 
-# 主處理流程
+    # 邊緣偵測 + 輪廓
+    edges = cv2.Canny(enhanced, 50, 150)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-def process_and_detect(image_path):
-    image = preprocess_image(image_path)
-    buffered = cv2.imencode(".jpg", np.array(image))[1].tobytes()
-    base64_image = base64.b64encode(buffered).decode("utf-8")
+    crops = []
+    for i, cnt in enumerate(contours):
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w * h > 10000:  # 過濾太小的雜訊框
+            crop = image[y:y+h, x:x+w]
+            crop_path = f"static/uploaded/crop_{i}.jpg"
+            cv2.imwrite(crop_path, crop)
+            crops.append(crop_path)
+    return crops
 
-    prompt = (
-        "What objects do you clearly see inside this backpack? "
-        "Please list them one per line without guessing. Skip unclear or hidden objects."
-    )
-
+# ✅ 將單一圖片轉 base64 並送 GPT 生成描述
+def describe_image(image_path):
+    with open(image_path, "rb") as f:
+        image_data = f.read()
+    base64_img = base64.b64encode(image_data).decode("utf-8")
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
+        response = openai.chat.completions.create(
+            model="gpt-4-turbo",
             messages=[
-                {"role": "system", "content": "You are an assistant for identifying backpack contents from photos."},
+                {"role": "system", "content": "You are a helpful assistant that identifies objects in cropped images from a backpack."},
                 {"role": "user", "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}",
-                            "detail": "auto"
-                        }
-                    }
+                    {"type": "text", "text": "What object is shown in this cropped photo? Be concise."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
                 ]}
             ],
-            max_tokens=500
+            max_tokens=100
         )
-
-        caption = response.choices[0].message.content
-        print("Generated Caption:", caption)
-
-        with open("caption.txt", "w") as f:
-            f.write(caption)
-
-        raw_items = [line.strip().lower() for line in caption.split("\n") if line.strip() and any(c.isalnum() for c in line)]
-        raw_items = [item.replace(".", "").replace(":", "").strip("-• ") for item in raw_items]
-
-        normalized_items = set()
-        for word in raw_items:
-            word = word.lower()
-            mapped = translation_dict.get(word, word)
-            for checklist_item in checklist:
-                if mapped in checklist_item or checklist_item in mapped:
-                    normalized_items.add(checklist_item)
-                    break
-
-        missing_items = list(checklist - normalized_items)
-        return list(normalized_items), missing_items
-
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print("❌ 發生錯誤：", e)
-        return [], list(checklist)
+        return f"(Error: {str(e)})"
+
+# ✅ 完整流程整合
+
+def process_and_detect_b(image_path):
+    object_crops = extract_objects(image_path)
+    crop_results = [describe_image(p) for p in object_crops]
+
+    # 比對有無缺項（只簡單字串比對，可改進）
+    found = set()
+    for caption in crop_results:
+        for item in EXPECTED_ITEMS:
+            if item.lower() in caption.lower():
+                found.add(item)
+    missing_items = [item for item in EXPECTED_ITEMS if item not in found]
+
+    return list(found), missing_items, object_crops, crop_results
