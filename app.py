@@ -12,7 +12,7 @@ def index():
     found, missing, crop_results, filename = [], [], [], None
 
     if request.method == 'POST':
-        file = request.files['image']
+        file = request.files['file']
         if file:
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
